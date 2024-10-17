@@ -26,18 +26,50 @@ main {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+#filters {
+    margin-bottom: 2em;
+    padding: 1em;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+#filters form label {
+    display: inline-block;
+    width: 120px;
+    margin-right: 10px;
+}
+
+#filters form input {
+    margin-bottom: 1em;
+    padding: 0.5em;
+    width: 200px;
+}
+
+#filters form button {
+    margin-right: 10px;
+    padding: 0.5em 1em;
+}
+
+
 #recordings-list li {
     cursor: pointer;
     padding: 0.5em;
     border-bottom: 1px solid #ddd;
     display: flex;
+    flex-direction: column;
+}
+
+#recordings-list li div {
+    display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-#recordings-list li:hover {
-    background-color: #f0f0f0;
+#recordings-list li button.delete-button {
+    align-self: flex-end;
+    margin-top: 0.5em;
 }
+
 
 #audio-player {
     width: 100%;

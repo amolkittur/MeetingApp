@@ -16,11 +16,35 @@
                 <input type="checkbox" id="create-transcript" name="create-transcript">
                 Generate Transcript
             </label>
+            <br>
+            <label for="department">Department:</label>
+            <input type="text" id="department" name="department" required>
+            <br>
+            <label for="language">Language:</label>
+            <input type="text" id="language" name="language" required>
+            <br>
             <button type="submit">Upload</button>
-        </form>
+        </form>        
     </header>
     
     <main>
+        <section id="filters">
+            <h2>Filters</h2>
+            <form id="filter-form">
+                <label for="department-filter">Department:</label>
+                <input type="text" id="department-filter" name="department-filter">
+                <br>
+                <label for="language-filter">Language:</label>
+                <input type="text" id="language-filter" name="language-filter">
+                <br>
+                <label for="filename-search">Search Filename:</label>
+                <input type="text" id="filename-search" name="filename-search">
+                <br>
+                <button type="submit">Apply Filters</button>
+                <button type="button" id="clear-filters">Clear Filters</button>
+            </form>
+        </section>
+
         <section id="audio-list">
             <h2>Available Recordings</h2>
             <ul id="recordings-list"></ul>

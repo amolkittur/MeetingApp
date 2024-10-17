@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request, Path
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from db import SessionLocal, engine, Base, AudioFile
@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 import uuid
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from typing import Optional
 
 load_dotenv()
 
@@ -52,41 +53,46 @@ async def serve_home(request: Request):
 async def upload_file(
     file: UploadFile = File(...),
     create_transcript: bool = Form(...),
+    department: str = Form(...),
+    language: str = Form(...),
     db: Session = Depends(get_db)
 ):
     try:
-        # Generate a unique filename
-        original_filename = file.filename
-        unique_filename = f"{uuid.uuid4()}_{original_filename}"
-        
-        # Save the audio file locally with the unique filename
-        original_file_path = os.path.join(AUDIO_DIRECTORY, unique_filename)
-        with open(original_file_path, "wb") as f:
+        # Original filename from the user
+        original_filename = os.path.basename(file.filename)
+
+        # Generate a unique filename for storage
+        unique_filename = f"{uuid.uuid4()}.mp3"
+        mp3_file_path = os.path.join(AUDIO_DIRECTORY, unique_filename)
+
+        # Save the uploaded file temporarily
+        temp_file_path = os.path.join(AUDIO_DIRECTORY, f"temp_{unique_filename}")
+        with open(temp_file_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
 
         # Convert to mp3 if necessary
-        mp3_filename = f"{os.path.splitext(unique_filename)[0]}.mp3"
-        mp3_file_path = os.path.join(AUDIO_DIRECTORY, mp3_filename)
-
         if not original_filename.lower().endswith(".mp3"):
             # Convert file to mp3 format
-            ffmpeg_tools.input(original_file_path).output(mp3_file_path).run()
-            os.remove(original_file_path)  # Remove the original file to save space
+            ffmpeg_tools.input(temp_file_path).output(mp3_file_path).run()
+            os.remove(temp_file_path)  # Remove the temp file
         else:
-            mp3_file_path = original_file_path
+            os.rename(temp_file_path, mp3_file_path)
 
-        # Extract metadata (e.g., duration)
+        # Extract metadata
         duration = get_audio_duration(mp3_file_path)
         upload_time = datetime.now(timezone.utc)
 
         # Save metadata in the database
         audio_file_entry = AudioFile(
-            filename=mp3_filename,
+            filename=unique_filename,  # Stored unique filename
+            original_filename=original_filename,  # Original filename
             filepath=mp3_file_path,
             duration=duration,
             upload_time=upload_time,
             transcript_path=None,
             transcription_status="pending" if create_transcript else "not_requested",
+            department=department.lower(),
+            language=language.lower(),
         )
         db.add(audio_file_entry)
         db.commit()
@@ -96,7 +102,7 @@ async def upload_file(
         if create_transcript:
             transcript_text = await generate_transcript(mp3_file_path)
             if transcript_text:
-                transcript_filename = f"{mp3_filename}.txt"
+                transcript_filename = f"{unique_filename}.txt"
                 transcript_path = os.path.join(TRANSCRIPT_DIRECTORY, transcript_filename)
                 with open(transcript_path, "w") as transcript_file:
                     transcript_file.write(transcript_text)
@@ -106,11 +112,7 @@ async def upload_file(
                 audio_file_entry.transcription_status = "failed"
             db.commit()
 
-        return {"message": "File uploaded successfully", "filename": mp3_filename}
-
-    except IntegrityError as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="A file with this name already exists")
+        return {"message": "File uploaded successfully", "filename": original_filename}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
@@ -142,17 +144,38 @@ def get_audio_duration(file_path: str):
         return 0.0
 
 @app.get("/list-audio-files")
-async def list_audio_files(page: int = 1, page_size: int = 5, db: Session = Depends(get_db)):
-    total_files = db.query(AudioFile).count()
-    audio_files = db.query(AudioFile).offset((page - 1) * page_size).limit(page_size).all()
+async def list_audio_files(
+    page: int = 1,
+    page_size: int = 5,
+    department: Optional[str] = None,
+    language: Optional[str] = None,
+    filename: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(AudioFile)
+
+    # Apply filters if provided
+    if department:
+        query = query.filter(AudioFile.department == department.lower())
+    if language:
+        query = query.filter(AudioFile.language == language.lower())
+    if filename:
+        query = query.filter(AudioFile.original_filename.ilike(f"%{filename.lower()}%"))
+
+    total_files = query.count()
+    audio_files = query.offset((page - 1) * page_size).limit(page_size).all()
 
     return {
         "recordings": [
             {
-                "filename": file.filename,
+                "id": file.id,
+                "filename": file.filename,  # Stored unique filename
+                "original_filename": file.original_filename,
                 "duration": file.duration,
                 "upload_time": file.upload_time,
                 "transcription_status": file.transcription_status,
+                "department": file.department,
+                "language": file.language,
             }
             for file in audio_files
         ],
@@ -160,28 +183,37 @@ async def list_audio_files(page: int = 1, page_size: int = 5, db: Session = Depe
         "has_next": (page * page_size) < total_files
     }
 
-@app.get("/serve-audio/{filename}")
-async def serve_audio(filename: str):
-    file_path = os.path.join(AUDIO_DIRECTORY, filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path)
 
-@app.get("/get-transcript/{filename}")
-async def get_transcript(filename: str, db: Session = Depends(get_db)):
-    audio_file = db.query(AudioFile).filter(AudioFile.filename == filename).first()
-    if not audio_file or not audio_file.transcript_path or not os.path.exists(audio_file.transcript_path):
-        raise HTTPException(status_code=404, detail="Transcript not found")
-    
-    with open(audio_file.transcript_path, 'r') as file:
-        transcript_text = file.read()
-    
-    return {"transcript": transcript_text}
+@app.get("/serve-audio/{file_id}")
+async def serve_audio(file_id: int = Path(..., description="The ID of the audio file"), db: Session = Depends(get_db)):
+    audio_file = db.query(AudioFile).filter(AudioFile.id == file_id).first()
+    if not audio_file:
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(audio_file.filepath)
+
+
+
+@app.get("/get-audio-details/{file_id}")
+async def get_audio_details(file_id: int, db: Session = Depends(get_db)):
+    audio_file = db.query(AudioFile).filter(AudioFile.id == file_id).first()
+    if not audio_file:
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    transcript_text = ""
+    if audio_file.transcript_path and os.path.exists(audio_file.transcript_path):
+        with open(audio_file.transcript_path, 'r') as file:
+            transcript_text = file.read()
+    return {
+        "filename": audio_file.filename,
+        "original_filename": audio_file.original_filename,
+        "transcript": transcript_text
+    }
+
+
 
 # Endpoint to delete an audio file and its metadata
-@app.delete("/delete-audio/{filename}")
-async def delete_audio(filename: str, db: Session = Depends(get_db)):
-    audio_file = db.query(AudioFile).filter(AudioFile.filename == filename).first()
+@app.delete("/delete-audio/{file_id}")
+async def delete_audio(file_id: int, db: Session = Depends(get_db)):
+    audio_file = db.query(AudioFile).filter(AudioFile.id == file_id).first()
     if not audio_file:
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -196,6 +228,7 @@ async def delete_audio(filename: str, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Audio file and its transcript deleted successfully"}
+
 
 
 #copy the transcript to the clipboard button
