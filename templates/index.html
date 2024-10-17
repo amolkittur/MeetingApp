@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Meeting Transcripts</title>
+</head>
+<body>
+    <header>
+        <h1>Meeting Transcript Manager</h1>
+        <form id="upload-form">
+            <input type="file" id="audio-file" name="audio-file" accept="audio/*" required>
+            <label>
+                <input type="checkbox" id="create-transcript" name="create-transcript">
+                Generate Transcript
+            </label>
+            <button type="submit">Upload</button>
+        </form>
+    </header>
+    
+    <main>
+        <section id="audio-list">
+            <h2>Available Recordings</h2>
+            <ul id="recordings-list"></ul>
+            <div id="pagination-controls">
+                <button id="prev-page" disabled>Previous</button>
+                <button id="next-page">Next</button>
+            </div>
+        </section>
+        
+        <section id="player-section">
+            <h2>Audio Player</h2>
+            <audio id="audio-player" controls>
+                <source id="audio-source" src="" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            <div id="transcript-section">
+                <h3>Transcript</h3>
+                <button id="copy-transcript" title="Copy Transcript">
+                    <i class="fas fa-copy"></i>
+                </button>
+                <pre id="transcript"></pre>
+            </div>
+        </section>
+    </main>
+    
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

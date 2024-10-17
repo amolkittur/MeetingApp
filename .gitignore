@@ -1,0 +1,5 @@
+.env
+*.pyc
+*.mp3
+*.txt
+*.db
