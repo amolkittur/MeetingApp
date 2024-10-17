@@ -3,57 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Transcripts</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <title>Meeting Transcripts</title>
 </head>
 <body>
     <header>
         <h1>Meeting Transcript Manager</h1>
-        <form id="upload-form">
-            <input type="file" id="audio-file" name="audio-file" accept="audio/*" required>
-            <label>
-                <input type="checkbox" id="create-transcript" name="create-transcript">
-                Generate Transcript
-            </label>
-            <br>
-            <label for="department">Department:</label>
-            <input type="text" id="department" name="department" required>
-            <br>
-            <label for="language">Language:</label>
-            <input type="text" id="language" name="language" required>
-            <br>
-            <button type="submit">Upload</button>
-        </form>        
+        <form id="upload-form" class="upload-form">
+            <!-- Choose Audio File -->
+            <div class="form-group">
+                <label for="audio-file" class="form-label">Choose Audio File:</label>
+                <input type="file" id="audio-file" name="audio-file" accept="audio/*" required class="form-input">
+            </div>
+
+            <!-- Generate Transcript Checkbox -->
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="create-transcript" name="create-transcript" class="form-checkbox">
+                <label for="create-transcript" class="form-label">Generate Transcript</label>
+            </div>
+
+            <!-- Department Field -->
+            <div class="form-group">
+                <label for="department" class="form-label">Department:</label>
+                <input type="text" id="department" name="department" required class="form-input">
+            </div>
+
+            <!-- Language Field -->
+            <div class="form-group">
+                <label for="language" class="form-label">Language:</label>
+                <input type="text" id="language" name="language" required class="form-input">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-group submit-group">
+                <button type="submit" class="submit-button">Upload</button>
+            </div>
+        </form>
     </header>
     
     <main>
+        <!-- Filters Section -->
         <section id="filters">
             <h2>Filters</h2>
-            <form id="filter-form">
-                <label for="department-filter">Department:</label>
-                <input type="text" id="department-filter" name="department-filter">
-                <br>
-                <label for="language-filter">Language:</label>
-                <input type="text" id="language-filter" name="language-filter">
-                <br>
-                <label for="filename-search">Search Filename:</label>
-                <input type="text" id="filename-search" name="filename-search">
-                <br>
-                <button type="submit">Apply Filters</button>
-                <button type="button" id="clear-filters">Clear Filters</button>
+            <form id="filter-form" class="filter-form">
+                <div class="filter-group">
+                    <label for="department-filter" class="filter-label">Department:</label>
+                    <input type="text" id="department-filter" name="department-filter" class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="language-filter" class="filter-label">Language:</label>
+                    <input type="text" id="language-filter" name="language-filter" class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="filename-search" class="filter-label">Search Filename:</label>
+                    <input type="text" id="filename-search" name="filename-search" class="filter-input">
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="filter-button">Apply Filters</button>
+                    <button type="button" id="clear-filters" class="filter-button clear-button">Clear Filters</button>
+                </div>
             </form>
         </section>
-
+        
+        <!-- Recordings List -->
         <section id="audio-list">
             <h2>Available Recordings</h2>
             <ul id="recordings-list"></ul>
             <div id="pagination-controls">
-                <button id="prev-page" disabled>Previous</button>
-                <button id="next-page">Next</button>
+                <button id="prev-page" disabled class="pagination-button">Previous</button>
+                <button id="next-page" class="pagination-button">Next</button>
             </div>
         </section>
         
+        <!-- Audio Player and Transcript -->
         <section id="player-section">
             <h2>Audio Player</h2>
             <audio id="audio-player" controls>
@@ -62,13 +85,18 @@
             </audio>
             <div id="transcript-section">
                 <h3>Transcript</h3>
-                <button id="copy-transcript" title="Copy Transcript">
+                <button id="copy-transcript" title="Copy Transcript" class="copy-button">
                     <i class="fas fa-copy"></i>
                 </button>
                 <pre id="transcript"></pre>
             </div>
         </section>
     </main>
+    
+    <!-- Loading Spinner (Optional) -->
+    <div id="loading-spinner" class="loading-spinner" style="display: none;">
+        <i class="fas fa-spinner fa-spin"></i>
+    </div>
     
     <script src="/static/js/main.js"></script>
 </body>

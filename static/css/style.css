@@ -1,89 +1,260 @@
+/* General Styles */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
     color: #333;
     margin: 0;
     padding: 0;
 }
 
 header {
-    background-color: #007bff;
+    background-color: #4a90e2;
     color: #fff;
-    padding: 1em;
+    padding: 2em 1em;
     text-align: center;
 }
 
-header form {
-    margin-top: 1em;
+h1 {
+    margin: 0 0 1em 0;
 }
 
 main {
-    max-width: 800px;
+    max-width: 1000px;
     margin: 2em auto;
-    padding: 1em;
-    background-color: #fff;
+    padding: 0 1em;
+}
+
+/* Upload Form Styles */
+.upload-form {
+    background-color: #ffffff;
+    padding: 2em;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center; /* Changed to center */
+    justify-content: space-between;
 }
 
-#filters {
-    margin-bottom: 2em;
-    padding: 1em;
-    background-color: #fff;
-    border-radius: 8px;
-}
-
-#filters form label {
-    display: inline-block;
-    width: 120px;
-    margin-right: 10px;
-}
-
-#filters form input {
-    margin-bottom: 1em;
-    padding: 0.5em;
-    width: 200px;
-}
-
-#filters form button {
-    margin-right: 10px;
-    padding: 0.5em 1em;
-}
-
-
-#recordings-list li {
-    cursor: pointer;
-    padding: 0.5em;
-    border-bottom: 1px solid #ddd;
+.form-group {
     display: flex;
     flex-direction: column;
+    margin-bottom: 1.5em;
+    flex: 1 1 200px; /* Added flex-basis */
 }
 
-#recordings-list li div {
-    display: flex;
-    justify-content: space-between;
+.form-label {
+    margin-bottom: 0.5em;
+    font-weight: bold;
+    color: #333; /* Ensure label text is visible */
+}
+
+.form-input {
+    padding: 0.75em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    color: #333; /* Ensure input text is visible */
+    background-color: #fff; /* Ensure input background is white */
+}
+
+.checkbox-group {
+    flex-direction: row;
     align-items: center;
 }
 
-#recordings-list li button.delete-button {
-    align-self: flex-end;
-    margin-top: 0.5em;
+.form-checkbox {
+    margin-right: 0.5em;
+    transform: scale(1.2);
 }
 
+.submit-group {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    /* Removed margin-top */
+    /* Temporary border for debugging */
+    /* border: 1px solid red; */
+}
+
+.submit-button {
+    padding: 0.75em 1.5em;
+    background-color: #28a745; /* Green background */
+    color: #fff; /* White text */
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-block; /* Ensure display is inline-block */
+    /* Temporary border for debugging */
+    /* border: 1px solid blue; */
+}
+
+.submit-button:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+/* Filters Form Styles */
+.filter-form {
+    background-color: #ffffff;
+    padding: 1.5em;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2em;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1em;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 200px;
+}
+
+.filter-label {
+    margin-bottom: 0.5em;
+    font-weight: bold;
+    color: #333; /* Ensure filter label text is visible */
+}
+
+.filter-input {
+    padding: 0.5em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    color: #333; /* Ensure filter input text is visible */
+    background-color: #fff; /* Ensure filter input background is white */
+}
+
+.filter-actions {
+    display: flex;
+    gap: 1em;
+}
+
+.filter-button {
+    padding: 0.6em 1.2em;
+    background-color: #4a90e2;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 0.9em;
+}
+
+.filter-button:hover {
+    background-color: #357ABD;
+}
+
+.clear-button {
+    background-color: #dc3545;
+}
+
+.clear-button:hover {
+    background-color: #c82333;
+}
+
+/* Recordings List Styles */
+#audio-list {
+    background-color: #ffffff;
+    padding: 1.5em;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#recordings-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#recordings-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1em;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+}
+
+#recordings-list li:hover {
+    background-color: #f9f9f9;
+}
+
+#recordings-list li:last-child {
+    border-bottom: none;
+}
+
+.delete-button {
+    padding: 0.5em 1em;
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.delete-button:hover {
+    background-color: #c82333;
+}
+
+/* Pagination Controls Styles */
+#pagination-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    margin-top: 1em;
+}
+
+.pagination-button {
+    padding: 0.6em 1.2em;
+    background-color: #4a90e2;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.pagination-button:disabled {
+    background-color: #a0c4e8;
+    cursor: not-allowed;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: #357ABD;
+}
+
+/* Audio Player and Transcript Styles */
+#player-section {
+    background-color: #ffffff;
+    padding: 1.5em;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 2em;
+}
 
 #audio-player {
     width: 100%;
-    margin-top: 1em;
+    margin-bottom: 1em;
 }
 
 #transcript-section {
     position: relative;
-    margin-top: 1em;
-    background-color: #f9f9f9;
+    background-color: #f8f9fa;
     padding: 1em;
     border-radius: 4px;
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
+}
+
+#transcript-section h3 {
+    margin-top: 0;
 }
 
 #transcript {
@@ -91,52 +262,21 @@ main {
     word-wrap: break-word;
     max-width: 100%;
     margin: 0;
-    padding-top: 40px; /* Add some top padding to prevent text from being hidden behind the button */
+    padding-right: 3em; /* To ensure space for the copy button */
+    color: #333; /* Ensure transcript text is visible */
 }
 
-#transcript p {
-    margin: 0;
-    padding: 5px 0;
-    transition: background-color 0.3s ease;
-}
-
-#transcript p.highlight {
-    background-color: #ffff99; /* Light yellow highlight */
-    font-weight: bold;
-}
-
-#pagination-controls {
-    margin-top: 1em;
-    text-align: center;
-}
-
-#pagination-controls button {
-    margin: 0.5em;
-    padding: 0.5em 1em;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-#pagination-controls button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-/* Move the copy button to the top-right corner */
-#copy-transcript {
+.copy-button {
     position: absolute;
-    top: 10px;  /* Adjusted top positioning */
-    right: 10px; /* Adjusted to top-right corner */
+    top: 10px;
+    right: 10px;
     background-color: #007bff;
     color: white;
     border: none;
     border-radius: 50%;
     width: 40px;
     height: 40px;
-    font-size: 18px;
+    font-size: 1.2em;
     cursor: pointer;
     transition: background-color 0.3s, transform 0.1s;
     display: flex;
@@ -146,51 +286,82 @@ main {
     z-index: 10;
 }
 
-#copy-transcript:hover {
+.copy-button:hover {
     background-color: #0056b3;
 }
 
-#copy-transcript:active {
+.copy-button:active {
     transform: scale(0.95);
 }
 
+/* Popup Styles */
 .popup {
     display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    padding: 0.75em 1.5em;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+    font-size: 1em;
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.popup.fade-out {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Highlight Class for Search (Optional) */
+.highlight {
+    background-color: yellow;
+    font-weight: bold;
+}
+
+/* Loading Spinner Styles */
+.loading-spinner {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: #4CAF50;
-    color: white;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    z-index: 1000;
+    font-size: 2em;
+    color: #4a90e2;
+    z-index: 1001;
 }
 
-/* Style to make the popup animation smoother */
-.popup.fade-in {
-    animation: fadeIn 0.5s ease-out;
-}
-
-.popup.fade-out {
-    animation: fadeOut 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-    0% {
-        opacity: 0;
+/* Responsive Design */
+@media (min-width: 768px) { /* Changed from 1000px to 768px */
+    .upload-form {
+        flex-wrap: nowrap;
     }
-    100% {
-        opacity: 1;
-    }
-}
 
-@keyframes fadeOut {
-    0% {
-        opacity: 1;
+    .form-group {
+        flex: 1 1 auto;
+        margin-right: 1em;
     }
-    100% {
-        opacity: 0;
+
+    .submit-group {
+        flex: 0 0 auto;
+        /* Removed margin-top as it's no longer needed */
+    }
+
+    .filter-form {
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1 1 200px;
     }
 }
