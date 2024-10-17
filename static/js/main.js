@@ -42,20 +42,86 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 2000); // Display duration
     }
 
+    const departmentFilterDropdown = document.getElementById("departmentFilterDropdown");
+    const departmentFilterMenu = document.getElementById("departmentFilterMenu");
+    const departmentFilterCheckboxes = departmentFilterMenu.querySelectorAll('input[type="checkbox"]');
+
+    const languageFilterDropdown = document.getElementById("languageFilterDropdown");
+    const languageFilterMenu = document.getElementById("languageFilterMenu");
+    const languageFilterCheckboxes = languageFilterMenu.querySelectorAll('input[type="checkbox"]');
+
+    // Function to toggle dropdown visibility
+    function toggleDropdown(dropdown, menu, checkboxes) {
+        dropdown.addEventListener("click", function(event) {
+            event.preventDefault();
+            if (menu.style.display === "block") {
+                menu.style.display = "none";
+                updateDropdownText(dropdown, checkboxes);
+            } else {
+                menu.style.display = "block";
+            }
+        });
+    }
+
+    // Function to update dropdown text
+    function updateDropdownText(dropdown, checkboxes) {
+        const selectedItems = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        
+        dropdown.innerHTML = selectedItems.length > 0
+            ? selectedItems.join(", ") + ' <span class="caret">&#9662;</span>'
+            : 'Select ' + dropdown.textContent.split(' ')[1] + ' <span class="caret">&#9662;</span>';
+    }
+
+    // Set up dropdowns
+    toggleDropdown(departmentFilterDropdown, departmentFilterMenu, departmentFilterCheckboxes);
+    toggleDropdown(languageFilterDropdown, languageFilterMenu, languageFilterCheckboxes);
+
+    // Close dropdowns when clicking outside
+    document.addEventListener("click", function(event) {
+        if (!departmentFilterDropdown.contains(event.target) && !departmentFilterMenu.contains(event.target)) {
+            departmentFilterMenu.style.display = "none";
+            updateDropdownText(departmentFilterDropdown, departmentFilterCheckboxes);
+        }
+        if (!languageFilterDropdown.contains(event.target) && !languageFilterMenu.contains(event.target)) {
+            languageFilterMenu.style.display = "none";
+            updateDropdownText(languageFilterDropdown, languageFilterCheckboxes);
+        }
+    });
+
+    // Update dropdown text when checkboxes change
+    departmentFilterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", () => updateDropdownText(departmentFilterDropdown, departmentFilterCheckboxes));
+    });
+
+    languageFilterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", () => updateDropdownText(languageFilterDropdown, languageFilterCheckboxes));
+    });
+
+    // Modify the filter form submission
     filterForm.addEventListener("submit", function(event) {
         event.preventDefault();
         currentPage = 1; // Reset to first page when filters change
-        currentFilters.department = departmentFilterInput.value.trim().toLowerCase();
-        currentFilters.language = languageFilterInput.value.trim().toLowerCase();
-        currentFilters.filename = filenameSearchInput.value.trim().toLowerCase();
+        currentFilters.department = Array.from(departmentFilterCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value)
+            .join(',');
+        currentFilters.language = Array.from(languageFilterCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value)
+            .join(',');
+        currentFilters.filename = filenameSearchInput.value;
         fetchRecordings(currentPage, currentFilters);
     });
 
     // Handle clear filters button
     clearFiltersButton.addEventListener("click", function() {
-        departmentFilterInput.value = '';
-        languageFilterInput.value = '';
+        departmentFilterCheckboxes.forEach(cb => cb.checked = false);
+        languageFilterCheckboxes.forEach(cb => cb.checked = false);
         filenameSearchInput.value = '';
+        updateDropdownText(departmentFilterDropdown, departmentFilterCheckboxes);
+        updateDropdownText(languageFilterDropdown, languageFilterCheckboxes);
         currentFilters = { department: '', language: '', filename: '' };
         currentPage = 1;
         fetchRecordings(currentPage, currentFilters);
@@ -80,20 +146,20 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (data.recordings.length === 0) {
                     recordingsList.innerHTML = "<li>No recordings found.</li>";
                 } else {
-                recordingsList.innerHTML = "";
-                data.recordings.forEach(file => {
-                    const listItem = document.createElement("li");
-                    listItem.innerHTML = `
-                        <div>
-                            <strong>${file.original_filename}</strong> (${file.duration.toFixed(2)} seconds)
-                            <br>
-                            Department: ${file.department}, Language: ${file.language}
-                        </div>
-                        <button class="delete-button" data-id="${file.id}">Delete</button>
-                    `;
-                    listItem.dataset.id = file.id;
-                    listItem.querySelector(".delete-button").addEventListener("click", (e) => deleteRecording(e, file.id));
-                    listItem.addEventListener("click", () => loadRecording(file.id));
+                    recordingsList.innerHTML = "";
+                    data.recordings.forEach(file => {
+                        const listItem = document.createElement("li");
+                        listItem.innerHTML = `
+                            <div>
+                                <strong>${file.original_filename}</strong> (${file.duration.toFixed(2)} seconds)
+                                <br>
+                                Department: ${file.department}, Language: ${file.language}
+                            </div>
+                            <button class="delete-button" data-id="${file.id}">Delete</button>
+                        `;
+                        listItem.dataset.id = file.id;
+                        listItem.querySelector(".delete-button").addEventListener("click", (e) => deleteRecording(e, file.id));
+                        listItem.addEventListener("click", () => loadRecording(file.id));
                         recordingsList.appendChild(listItem);
                     });
                 }
@@ -109,13 +175,13 @@ document.addEventListener("DOMContentLoaded", function() {
     prevPageButton.addEventListener("click", () => {
         if (currentPage > 1) {
             currentPage--;
-            fetchRecordings(currentPage);
+            fetchRecordings(currentPage, currentFilters);
         }
     });
 
     nextPageButton.addEventListener("click", () => {
         currentPage++;
-        fetchRecordings(currentPage);
+        fetchRecordings(currentPage, currentFilters);
     });
 
     // Handle file upload
@@ -124,9 +190,14 @@ document.addEventListener("DOMContentLoaded", function() {
         const formData = new FormData();
         formData.append("file", document.getElementById("audio-file").files[0]);
         formData.append("create_transcript", document.getElementById("create-transcript").checked);
-        formData.append("department", document.getElementById("department").value.toLowerCase());
-        formData.append("language", document.getElementById("language").value.toLowerCase());
-    
+        formData.append("department", document.getElementById("department").value);
+        
+        // Append selected languages as a list
+        const selectedLanguages = Array.from(languageCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        formData.append("language", JSON.stringify(selectedLanguages));
+
         fetch("/upload", {
             method: "POST",
             body: formData
@@ -141,13 +212,14 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });    
 
-    // Load a recording and its transcript /get-transcript
     // Load a recording and its transcript
     function loadRecording(id) {
+        console.log(`Loading recording with id: ${id}`); // Debugging
         fetch(`/get-audio-details/${id}`)
             .then(response => response.json())
             .then(data => {
-                audioSource.src = `/serve-audio/${id}`;  // Use id instead of filename
+                console.log(`Fetched audio details:`, data); // Debugging
+                audioSource.src = `/serve-audio/${id}`;
                 audioPlayer.load();
                 displayTranscript(data.transcript);
             })
@@ -167,14 +239,13 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(response => response.json())
             .then(data => {
                 alert(data.message);
-                fetchRecordings(currentPage);
+                fetchRecordings(currentPage, currentFilters);
             })
             .catch(error => {
                 console.error("Error deleting file:", error);
             });
         }
     }    
-
 
     function displayTranscript(transcript) {
         transcriptSection.textContent = transcript;
@@ -203,22 +274,35 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // Delete a recording
-    function deleteRecording(event, filename) {
-        event.stopPropagation();
-        const confirmed = confirm("Do you want to delete the audio file?");
-        if (confirmed) {
-            fetch(`/delete-audio/${filename}`, {
-                method: "DELETE"
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                fetchRecordings(currentPage);
-            })
-            .catch(error => {
-                console.error("Error deleting file:", error);
-            });
+    const languageDropdown = document.getElementById("languageDropdown");
+    const languageMenu = document.getElementById("languageMenu");
+    const languageCheckboxes = languageMenu.querySelectorAll('input[type="checkbox"]');
+
+    // Toggle dropdown menu
+    languageDropdown.addEventListener("click", function(event) {
+        event.preventDefault();
+        languageMenu.style.display = languageMenu.style.display === "block" ? "none" : "block";
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", function(event) {
+        if (!languageDropdown.contains(event.target) && !languageMenu.contains(event.target)) {
+            languageMenu.style.display = "none";
         }
+    });
+
+    // Update dropdown button text
+    function updateDropdownText() {
+        const selectedLanguages = Array.from(languageCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        
+        languageDropdown.innerHTML = selectedLanguages.length > 0
+            ? selectedLanguages.join(", ") + ' <span class="caret">&#9662;</span>'
+            : 'Select Languages <span class="caret">&#9662;</span>';
     }
+
+    languageCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", updateDropdownText);
+    });
 });

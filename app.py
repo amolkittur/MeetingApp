@@ -12,7 +12,9 @@ from sqlalchemy.exc import IntegrityError
 import uuid
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from typing import Optional
+from typing import Optional, List
+import json
+from sqlalchemy import or_
 
 load_dotenv()
 
@@ -54,10 +56,13 @@ async def upload_file(
     file: UploadFile = File(...),
     create_transcript: bool = Form(...),
     department: str = Form(...),
-    language: str = Form(...),
+    language: str = Form(...),  # This will be a JSON string
     db: Session = Depends(get_db)
 ):
     try:
+        # Parse the JSON string back into a list
+        languages = json.loads(language)
+
         # Original filename from the user
         original_filename = os.path.basename(file.filename)
 
@@ -82,17 +87,20 @@ async def upload_file(
         duration = get_audio_duration(mp3_file_path)
         upload_time = datetime.now(timezone.utc)
 
+        # Join multiple languages into a comma-separated string for storage
+        languages_str = ",".join(languages)
+
         # Save metadata in the database
         audio_file_entry = AudioFile(
-            filename=unique_filename,  # Stored unique filename
-            original_filename=original_filename,  # Original filename
+            filename=unique_filename,
+            original_filename=original_filename,
             filepath=mp3_file_path,
             duration=duration,
             upload_time=upload_time,
             transcript_path=None,
             transcription_status="pending" if create_transcript else "not_requested",
-            department=department.lower(),
-            language=language.lower(),
+            department=department,
+            language=languages_str,  # Store as comma-separated string
         )
         db.add(audio_file_entry)
         db.commit()
@@ -156,11 +164,14 @@ async def list_audio_files(
 
     # Apply filters if provided
     if department:
-        query = query.filter(AudioFile.department == department.lower())
+        departments = [dep.strip() for dep in department.split(',')]
+        query = query.filter(AudioFile.department.in_(departments))
     if language:
-        query = query.filter(AudioFile.language == language.lower())
+        languages = [lang.strip().lower() for lang in language.split(',')]
+        language_filters = [AudioFile.language.like(f"%{lang}%") for lang in languages]
+        query = query.filter(or_(*language_filters))
     if filename:
-        query = query.filter(AudioFile.original_filename.ilike(f"%{filename.lower()}%"))
+        query = query.filter(AudioFile.original_filename.ilike(f"%{filename}%"))
 
     total_files = query.count()
     audio_files = query.offset((page - 1) * page_size).limit(page_size).all()
@@ -169,7 +180,7 @@ async def list_audio_files(
         "recordings": [
             {
                 "id": file.id,
-                "filename": file.filename,  # Stored unique filename
+                "filename": file.filename,
                 "original_filename": file.original_filename,
                 "duration": file.duration,
                 "upload_time": file.upload_time,
@@ -189,7 +200,11 @@ async def serve_audio(file_id: int = Path(..., description="The ID of the audio 
     audio_file = db.query(AudioFile).filter(AudioFile.id == file_id).first()
     if not audio_file:
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(audio_file.filepath)
+    return FileResponse(
+        path=audio_file.filepath,
+        media_type='audio/mpeg',
+        filename=audio_file.original_filename  # Optional: Helps with downloads
+    )
 
 
 
@@ -237,3 +252,6 @@ async def delete_audio(file_id: int, db: Session = Depends(get_db)):
 #upload all the previous recordings
 #add search functionality
 #integrate with hakuna matata
+
+
+

@@ -23,16 +23,31 @@
                 <label for="create-transcript" class="form-label">Generate Transcript</label>
             </div>
 
-            <!-- Department Field -->
+            <!-- Department Dropdown -->
             <div class="form-group">
                 <label for="department" class="form-label">Department:</label>
-                <input type="text" id="department" name="department" required class="form-input">
+                <select id="department" name="department" required class="form-input">
+                    <option value="" disabled selected>Select Department</option>
+                    <option value="Serendipity">Serendipity</option>
+                    <option value="Trademan">Trademan</option>
+                    <option value="DhoomStudios">DhoomStudios</option>
+                </select>
             </div>
 
-            <!-- Language Field -->
+            <!-- Replace the existing language dropdown with this new one -->
             <div class="form-group">
-                <label for="language" class="form-label">Language:</label>
-                <input type="text" id="language" name="language" required class="form-input">
+                <label for="language" class="form-label">Language(s):</label>
+                <div class="dropdown">
+                    <button type="button" class="dropdown-toggle" id="languageDropdown">
+                        Select Languages <span class="caret">&#9662;</span>
+                    </button>
+                    <div class="dropdown-menu" id="languageMenu">
+                        <label><input type="checkbox" name="language" value="English"> English</label>
+                        <label><input type="checkbox" name="language" value="Kannada"> Kannada</label>
+                        <label><input type="checkbox" name="language" value="Hindi"> Hindi</label>
+                        <!-- Add more languages as needed -->
+                    </div>
+                </div>
             </div>
 
             <!-- Submit Button -->
@@ -49,11 +64,29 @@
             <form id="filter-form" class="filter-form">
                 <div class="filter-group">
                     <label for="department-filter" class="filter-label">Department:</label>
-                    <input type="text" id="department-filter" name="department-filter" class="filter-input">
+                    <div class="dropdown">
+                        <button type="button" class="dropdown-toggle" id="departmentFilterDropdown">
+                            Select Department <span class="caret">&#9662;</span>
+                        </button>
+                        <div class="dropdown-menu" id="departmentFilterMenu">
+                            <label><input type="checkbox" name="department-filter" value="Serendipity"> Serendipity</label>
+                            <label><input type="checkbox" name="department-filter" value="Trademan"> Trademan</label>
+                            <label><input type="checkbox" name="department-filter" value="DhoomStudios"> DhoomStudios</label>
+                        </div>
+                    </div>
                 </div>
                 <div class="filter-group">
                     <label for="language-filter" class="filter-label">Language:</label>
-                    <input type="text" id="language-filter" name="language-filter" class="filter-input">
+                    <div class="dropdown">
+                        <button type="button" class="dropdown-toggle" id="languageFilterDropdown">
+                            Select Languages <span class="caret">&#9662;</span>
+                        </button>
+                        <div class="dropdown-menu" id="languageFilterMenu">
+                            <label><input type="checkbox" name="language-filter" value="English"> English</label>
+                            <label><input type="checkbox" name="language-filter" value="Kannada"> Kannada</label>
+                            <label><input type="checkbox" name="language-filter" value="Hindi"> Hindi</label>
+                        </div>
+                    </div>
                 </div>
                 <div class="filter-group">
                     <label for="filename-search" class="filter-label">Search Filename:</label>
@@ -79,7 +112,7 @@
         <!-- Audio Player and Transcript -->
         <section id="player-section">
             <h2>Audio Player</h2>
-            <audio id="audio-player" controls>
+            <audio id="audio-player" controls preload="metadata">
                 <source id="audio-source" src="" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
