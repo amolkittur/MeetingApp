@@ -6,27 +6,31 @@ document.addEventListener("DOMContentLoaded", function() {
     const transcriptSection = document.getElementById("transcript");
     const prevPageButton = document.getElementById("prev-page");
     const nextPageButton = document.getElementById("next-page");
+    const copyTranscriptButton = document.getElementById("copy-transcript");
     let currentPage = 1;
     const pageSize = 5;
-    let transcriptData = [];
-
-    const copyTranscriptButton = document.getElementById("copy-transcript");
 
     // Create popup element
     const popup = document.createElement('div');
     popup.className = 'popup';
-    popup.textContent = 'Content copied!';
+    popup.textContent = 'Transcript copied!';
     document.body.appendChild(popup);
 
-    // Function to show popup
+    // Function to show and hide popup
     function showPopup() {
+        popup.classList.add('fade-in');
         popup.style.display = 'block';
         setTimeout(() => {
-            popup.style.display = 'none';
-        }, 2000);
+            popup.classList.remove('fade-in');
+            popup.classList.add('fade-out');
+            setTimeout(() => {
+                popup.classList.remove('fade-out');
+                popup.style.display = 'none';
+            }, 500); // Duration of fade-out
+        }, 2000); // Display duration
     }
 
-    // Fetch available recordings with pagination
+    // Fetch recordings with pagination
     function fetchRecordings(page) {
         fetch(`/list-audio-files?page=${page}&page_size=${pageSize}`)
             .then(response => response.json())
@@ -109,15 +113,15 @@ document.addEventListener("DOMContentLoaded", function() {
         copyTranscriptButton.style.display = transcript ? "block" : "none";
     }
 
-    // Add copy functionality
+    // Copy transcript functionality
     copyTranscriptButton.addEventListener("click", function() {
-        const transcriptText = transcriptSection.textContent;
+        const transcriptText = transcriptSection.innerText;
         if (transcriptText) {
             navigator.clipboard.writeText(transcriptText).then(() => {
-                // Visual feedback
+                // Visual feedback when copied
                 copyTranscriptButton.innerHTML = '<i class="fas fa-check"></i>';
                 copyTranscriptButton.style.backgroundColor = '#28a745';
-                showPopup(); // Show the popup
+                showPopup();
                 setTimeout(() => {
                     copyTranscriptButton.innerHTML = '<i class="fas fa-copy"></i>';
                     copyTranscriptButton.style.backgroundColor = '';
@@ -134,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Delete a recording
     function deleteRecording(event, filename) {
         event.stopPropagation();
-        const confirmed = confirm("Do you want to delete the audio file? Yes or No");
+        const confirmed = confirm("Do you want to delete the audio file?");
         if (confirmed) {
             fetch(`/delete-audio/${filename}`, {
                 method: "DELETE"

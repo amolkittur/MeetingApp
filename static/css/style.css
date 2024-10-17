@@ -93,10 +93,11 @@ main {
     cursor: not-allowed;
 }
 
+/* Move the copy button to the top-right corner */
 #copy-transcript {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 10px;  /* Adjusted top positioning */
+    right: 10px; /* Adjusted to top-right corner */
     background-color: #007bff;
     color: white;
     border: none;
@@ -110,7 +111,7 @@ main {
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    z-index: 10; 
+    z-index: 10;
 }
 
 #copy-transcript:hover {
@@ -119,10 +120,6 @@ main {
 
 #copy-transcript:active {
     transform: scale(0.95);
-}
-
-#copy-transcript i {
-    line-height: 1;
 }
 
 .popup {
@@ -137,4 +134,31 @@ main {
     border-radius: 5px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     z-index: 1000;
+}
+
+/* Style to make the popup animation smoother */
+.popup.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.popup.fade-out {
+    animation: fadeOut 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
