@@ -177,12 +177,12 @@ main {
     align-items: center;
     padding: 1em;
     border-bottom: 1px solid #e0e0e0;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, border-left 0.3s ease;
     cursor: pointer;
 }
 
 #recordings-list li:hover {
-    background-color: #f9f9f9;
+    background-color: #f0f0f0;
 }
 
 #recordings-list li:last-child {
@@ -324,50 +324,33 @@ main {
     to { opacity: 0; transform: translateY(-10px); }
 }
 
-/* Highlight Class for Search (Optional) */
-.highlight {
-    background-color: yellow;
-    font-weight: bold;
+/* Highlighted Recording Styles */
+#recordings-list li.highlight {
+    background-color: #d1ecf1; /* Light blue background */
+    border-left: 5px solid #0c5460; /* Dark blue left border */
+    color: #0c5460; /* Dark blue text */
+    transition: background-color 0.3s ease, border-left 0.3s ease, color 0.3s ease;
 }
 
-/* Loading Spinner Styles */
-.loading-spinner {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 2em;
-    color: #4a90e2;
-    z-index: 1001;
+/* Playing Indicator Styles */
+.playing-indicator {
+    margin-left: 10px;
+    color: #28a745; /* Green color for the play icon */
+    font-size: 1.2em;
 }
 
-/* Responsive Design */
-@media (min-width: 768px) { /* Changed from 1000px to 768px */
-    .upload-form {
-        flex-wrap: nowrap;
-    }
-
-    .form-group {
-        flex: 1 1 auto;
-        margin-right: 1em;
-    }
-
-    .submit-group {
-        flex: 0 0 auto;
-        /* Removed margin-top as it's no longer needed */
-    }
-
-    .filter-form {
-        flex-wrap: wrap;
-    }
-
-    .filter-group {
-        flex: 1 1 200px;
-    }
+/* Optional: Animate the Playing Indicator */
+.playing-indicator i {
+    animation: pulse 1s infinite;
 }
 
-/* Add these styles at the end of your existing CSS file */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
 
+/* Dropdown Styles */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -395,7 +378,7 @@ main {
     background-color: #ffffff;
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
+    z-index: 1000; /* Increased z-index */
     max-height: 200px;
     overflow-y: auto;
     width: 100%;
@@ -418,6 +401,7 @@ main {
     float: right;
 }
 
+/* Pattern Section Styles */
 #pattern-section {
     margin-top: 2em;
     background-color: #ffffff;
@@ -459,4 +443,40 @@ main {
 
 .generate-button:hover {
     background-color: #218838;
+}
+
+/* Loading Spinner Styles */
+.loading-spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2em;
+    color: #4a90e2;
+    z-index: 1001;
+}
+
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1em;
+    font-size: 1.5em;
+    color: #4a90e2;
+}
+
+.loading-spinner i {
+    margin-right: 0.5em;
+}
+
+/* Disabled Generate Patterns Button Styles */
+.generate-button:disabled {
+    background-color: #a0c4e8;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Optional: Transition for Smooth Button State Change */
+.generate-button {
+    transition: background-color 0.3s ease, opacity 0.3s ease;
 }

@@ -32,10 +32,7 @@ class PatternAgent:
                 {"role": "user", "content": self.transcript},
             ],
         )
-        return {
-            "pattern": pattern,
-            "response": response.choices[0].message.content,
-        }
+        return response.choices[0].message.content,
     
     async def process_patterns(self) -> List[dict]:
         tasks = [

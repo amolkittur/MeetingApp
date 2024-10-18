@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ================================
     // Cached DOM Elements
     // ================================
-    
+
     // Upload Form Elements
     const uploadForm = document.getElementById("upload-form");
     const audioFileInput = document.getElementById("audio-file");
@@ -11,31 +11,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const languageDropdown = document.getElementById("languageDropdown");
     const languageMenu = document.getElementById("languageMenu");
     const languageCheckboxes = languageMenu.querySelectorAll('input[type="checkbox"]');
-    
+
     // Filter Form Elements
     const filterForm = document.getElementById("filter-form");
     const departmentFilterDropdown = document.getElementById("departmentFilterDropdown");
     const departmentFilterMenu = document.getElementById("departmentFilterMenu");
     const departmentFilterCheckboxes = departmentFilterMenu.querySelectorAll('input[type="checkbox"]');
-    
+
     const languageFilterDropdown = document.getElementById("languageFilterDropdown");
     const languageFilterMenu = document.getElementById("languageFilterMenu");
     const languageFilterCheckboxes = languageFilterMenu.querySelectorAll('input[type="checkbox"]');
-    
+
     const filenameSearchInput = document.getElementById("filename-search");
     const clearFiltersButton = document.getElementById("clear-filters");
-    
+
     // Recordings List Elements
     const recordingsList = document.getElementById("recordings-list");
     const prevPageButton = document.getElementById("prev-page");
     const nextPageButton = document.getElementById("next-page");
-    
+
     // Audio Player and Transcript Elements
     const audioPlayer = document.getElementById("audio-player");
     const audioSource = document.getElementById("audio-source");
     const transcriptSection = document.getElementById("transcript");
     const copyTranscriptButton = document.getElementById("copy-transcript");
-    
+
     // Pattern Generation Elements
     const patternSection = document.getElementById("pattern-section");
     const patternDropdown = document.getElementById("patternDropdown");
@@ -45,29 +45,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const patternResultsSection = document.getElementById("pattern-results-section");
     const patternResults = document.getElementById("pattern-results");
     const copyPatternsButton = document.getElementById("copy-patterns");
-    
+
     // Popup Element for User Feedback
     const popup = document.createElement('div');
     popup.className = 'popup';
     popup.textContent = 'Copied!';
     document.body.appendChild(popup);
-    
+
     // ================================
     // State Variables
     // ================================
     let currentPage = 1;
     const pageSize = 5;
-    
+
     let currentFilters = {
         department: "",
         language: "",
         filename: ""
     };
-    
+
+    let currentSelectedId = null; // To keep track of the currently selected recording
+
     // ================================
     // Utility Functions
     // ================================
-    
+
     /**
      * Toggles the visibility of a dropdown menu and updates its text based on selected checkboxes.
      * @param {HTMLElement} dropdown - The dropdown button element.
@@ -84,12 +86,12 @@ document.addEventListener("DOMContentLoaded", () => {
             menu.style.display = isVisible ? "none" : "block";
             updateDropdownText(dropdown, checkboxes, defaultText);
         });
-    
+
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener("change", () => updateDropdownText(dropdown, checkboxes, defaultText));
         });
     };
-    
+
     /**
      * Updates the dropdown button text based on selected checkboxes.
      * @param {HTMLElement} dropdown - The dropdown button element.
@@ -100,14 +102,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedItems = Array.from(checkboxes)
             .filter(cb => cb.checked)
             .map(cb => cb.value);
-        
+
         console.log(`Selected in ${dropdown.id}:`, selectedItems); // Debugging line
-        
+
         dropdown.innerHTML = selectedItems.length > 0
             ? `${selectedItems.join(", ")} <span class="caret">&#9662;</span>`
             : `${defaultText} <span class="caret">&#9662;</span>`;
     };
-    
+
     /**
      * Closes all dropdown menus.
      */
@@ -116,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
             menu.style.display = "none";
         });
     };
-    
+
     /**
      * Retrieves selected values from a set of checkboxes.
      * @param {NodeList} checkboxes - The checkboxes to retrieve values from.
@@ -128,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .map(cb => cb.value)
             .join(',');
     };
-    
+
     /**
      * Resets all filters to their default state.
      */
@@ -142,8 +144,11 @@ document.addEventListener("DOMContentLoaded", () => {
         updateDropdownText(languageDropdown, languageCheckboxes, "Select Languages");
         currentFilters = { department: '', language: '', filename: '' };
         currentPage = 1;
+        currentSelectedId = null; // Reset selected ID
+        // Remove highlight from all list items
+        recordingsList.querySelectorAll('li').forEach(li => li.classList.remove('highlight'));
     };
-    
+
     /**
      * Shows a temporary popup message for user feedback.
      * @param {string} message - The message to display in the popup.
@@ -161,34 +166,45 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 500);
         }, 2000);
     };
-    
+
+    /**
+     * Creates and returns a loading spinner element.
+     * @returns {HTMLElement} - The loading spinner element.
+     */
+    const createLoadingSpinner = () => {
+        const spinner = document.createElement("div");
+        spinner.classList.add("loading-spinner");
+        spinner.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating patterns...';
+        return spinner;
+    };
+
     // ================================
     // Initialize Dropdowns
     // ================================
-    
+
     // Department Filter Dropdown
     toggleDropdown(departmentFilterDropdown, departmentFilterMenu, departmentFilterCheckboxes, "Select Department");
-    
+
     // Language Filter Dropdown
     toggleDropdown(languageFilterDropdown, languageFilterMenu, languageFilterCheckboxes, "Select Languages");
-    
+
     // Language Dropdown in Upload Form
     toggleDropdown(languageDropdown, languageMenu, languageCheckboxes, "Select Languages");
-    
+
     // Pattern Dropdown
     toggleDropdown(patternDropdown, patternMenu, patternCheckboxes, "Select Patterns");
-    
+
     // Close all dropdowns when clicking outside
     document.addEventListener("click", (event) => {
         if (![departmentFilterDropdown, languageFilterDropdown, languageDropdown, patternDropdown].some(dropdown => dropdown.contains(event.target))) {
             closeAllDropdowns();
         }
     });
-    
+
     // ================================
     // Fetch Recordings with Pagination and Filters
     // ================================
-    
+
     /**
      * Fetches recordings from the server based on the current page and filters.
      * @param {number} page - The current page number.
@@ -203,10 +219,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 language: filters.language,
                 filename: filters.filename
             });
-    
+
             const response = await fetch(`/list-audio-files?${queryParams.toString()}`);
             if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-    
+
             const data = await response.json();
             renderRecordings(data.recordings);
             updatePaginationControls(data.has_previous, data.has_next);
@@ -215,7 +231,7 @@ document.addEventListener("DOMContentLoaded", () => {
             recordingsList.innerHTML = "<li>Error loading recordings.</li>";
         }
     };
-    
+
     /**
      * Renders the list of recordings in the UI.
      * @param {Array} recordings - The array of recording objects.
@@ -232,20 +248,41 @@ document.addEventListener("DOMContentLoaded", () => {
                     Department: ${file.department}, Language: ${file.language}
                 </div>
                 <button class="delete-button" data-id="${file.id}">Delete</button>
+                <span class="playing-indicator" style="display: none;"><i class="fas fa-play-circle"></i></span>
             `;
-            // Event Listeners
+            // Event Listener for List Item Click
             listItem.addEventListener("click", (e) => {
+                // Prevent triggering when clicking the delete button
                 if (!e.target.classList.contains('delete-button')) {
+                    // Remove highlight from all list items
+                    recordingsList.querySelectorAll('li').forEach(li => li.classList.remove('highlight'));
+
+                    // Add highlight to the clicked list item
+                    listItem.classList.add('highlight');
+
+                    // Remove playing indicator from all list items
+                    recordingsList.querySelectorAll('.playing-indicator').forEach(indicator => indicator.style.display = 'none');
+
+                    // Add playing indicator to the clicked list item
+                    const playingIndicator = listItem.querySelector('.playing-indicator');
+                    if (playingIndicator) {
+                        playingIndicator.style.display = 'inline';
+                    }
+
+                    // Load and play the selected audio
                     loadRecording(file.id);
                 }
             });
+
+            // Event Listener for Delete Button Click
             listItem.querySelector(".delete-button").addEventListener("click", (e) => {
                 deleteRecording(e, file.id);
             });
+
             recordingsList.appendChild(listItem);
         });
     };
-    
+
     /**
      * Updates the state of pagination buttons based on the availability of previous and next pages.
      * @param {boolean} hasPrev - Indicates if a previous page exists.
@@ -255,30 +292,30 @@ document.addEventListener("DOMContentLoaded", () => {
         prevPageButton.disabled = !hasPrev;
         nextPageButton.disabled = !hasNext;
     };
-    
+
     // Initial Fetch
     fetchRecordings(currentPage, currentFilters);
-    
+
     // ================================
     // Pagination Controls
     // ================================
-    
+
     prevPageButton.addEventListener("click", () => {
         if (currentPage > 1) {
             currentPage--;
             fetchRecordings(currentPage, currentFilters);
         }
     });
-    
+
     nextPageButton.addEventListener("click", () => {
         currentPage++;
         fetchRecordings(currentPage, currentFilters);
     });
-    
+
     // ================================
     // Filter Form Submission
     // ================================
-    
+
     filterForm.addEventListener("submit", (event) => {
         event.preventDefault();
         currentPage = 1;
@@ -289,44 +326,44 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         fetchRecordings(currentPage, currentFilters);
     });
-    
+
     // ================================
     // Clear Filters
     // ================================
-    
+
     clearFiltersButton.addEventListener("click", () => {
         resetFilters();
         fetchRecordings(currentPage, currentFilters);
     });
-    
+
     // ================================
     // Handle File Upload
     // ================================
-    
+
     uploadForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const fileInput = audioFileInput;
         const createTranscript = createTranscriptCheckbox.checked;
         const department = departmentSelect.value;
         const selectedLanguages = getSelectedValues(languageCheckboxes).split(',').filter(Boolean);
-    
+
         if (!fileInput.files.length) {
             alert("Please select a file to upload.");
             return;
         }
-    
+
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
         formData.append("create_transcript", createTranscript);
         formData.append("department", department);
         formData.append("language", JSON.stringify(selectedLanguages));
-    
+
         try {
             const response = await fetch("/upload", {
                 method: "POST",
                 body: formData
             });
-    
+
             const data = await response.json();
             alert(data.message);
             fetchRecordings(currentPage, currentFilters);
@@ -337,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Failed to upload the file. Please try again.");
         }
     });
-    
+
     /**
      * Resets the dropdown texts to their default values.
      */
@@ -346,11 +383,11 @@ document.addEventListener("DOMContentLoaded", () => {
         updateDropdownText(languageFilterDropdown, languageFilterCheckboxes, "Select Languages");
         updateDropdownText(languageDropdown, languageCheckboxes, "Select Languages");
     };
-    
+
     // ================================
     // Load a Recording and Its Transcript
     // ================================
-    
+
     /**
      * Loads the selected recording and displays its transcript.
      * @param {string} id - The ID of the recording to load.
@@ -360,21 +397,30 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch(`/get-audio-details/${id}`);
             if (!response.ok) throw new Error(`Error: ${response.statusText}`);
             const data = await response.json();
-    
+
+            // Pause any currently playing audio
+            audioPlayer.pause();
+
+            // Set the new audio source and play
             audioSource.src = `/serve-audio/${id}`;
             audioPlayer.load();
+            audioPlayer.play();
+
             displayTranscript(data.transcript);
             patternSection.style.display = "block";
+
+            // Update the current selected ID
+            currentSelectedId = id;
         } catch (error) {
             console.error('Error loading recording:', error);
             alert("Failed to load the recording.");
         }
     };
-    
+
     // ================================
     // Delete a Recording
     // ================================
-    
+
     /**
      * Deletes the selected recording.
      * @param {Event} event - The event object.
@@ -383,22 +429,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteRecording = async (event, id) => {
         event.stopPropagation();
         if (!confirm("Do you want to delete the audio file?")) return;
-    
+
         try {
             const response = await fetch(`/delete-audio/${id}`, { method: "DELETE" });
             const data = await response.json();
             alert(data.message);
             fetchRecordings(currentPage, currentFilters);
+
+            // If the deleted recording was selected, reset the audio player and highlight
+            if (currentSelectedId === id) {
+                audioPlayer.pause();
+                audioSource.src = "";
+                transcriptSection.textContent = "";
+                copyTranscriptButton.style.display = "none";
+                patternSection.style.display = "none";
+                currentSelectedId = null;
+            }
         } catch (error) {
             console.error("Error deleting file:", error);
             alert("Failed to delete the file. Please try again.");
         }
     };
-    
+
     // ================================
     // Display Transcript
     // ================================
-    
+
     /**
      * Displays the transcript in the UI.
      * @param {string} transcript - The transcript text to display.
@@ -407,18 +463,18 @@ document.addEventListener("DOMContentLoaded", () => {
         transcriptSection.textContent = transcript || "No transcript available.";
         copyTranscriptButton.style.display = transcript ? "block" : "none";
     };
-    
+
     // ================================
     // Copy Transcript Functionality
     // ================================
-    
+
     copyTranscriptButton.addEventListener("click", async () => {
         const transcriptText = transcriptSection.textContent;
         if (!transcriptText || transcriptText === "No transcript available.") {
             alert("No transcript available to copy.");
             return;
         }
-    
+
         try {
             await navigator.clipboard.writeText(transcriptText);
             copyTranscriptButton.innerHTML = '<i class="fas fa-check"></i>';
@@ -433,39 +489,50 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Failed to copy transcript. Please try again.");
         }
     });
-    
+
     // ================================
     // Generate Patterns
     // ================================
-    
+
     generatePatternsButton.addEventListener("click", async () => {
         const transcript = transcriptSection.textContent;
         const selectedPatterns = Array.from(patternCheckboxes)
             .filter(cb => cb.checked)
             .map(cb => cb.value);
-    
+
         if (!transcript || !selectedPatterns.length) {
             alert("Please ensure there's a transcript and at least one pattern is selected.");
             return;
         }
-    
+
+        // Disable the Generate Patterns button to prevent multiple clicks
+        generatePatternsButton.disabled = true;
+
+        // Create and display the loading spinner
+        const spinner = createLoadingSpinner();
+        patternSection.appendChild(spinner);
+
         try {
             const response = await fetch("/generate-patterns", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ transcript, patterns: selectedPatterns }),
             });
-    
+
             if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-    
+
             const data = await response.json();
             displayPatternResults(data.results);
         } catch (error) {
             console.error("Error generating patterns:", error);
             alert("Failed to generate patterns. Please try again.");
+        } finally {
+            // Remove the loading spinner and re-enable the button
+            spinner.remove();
+            generatePatternsButton.disabled = false;
         }
     });
-    
+
     /**
      * Displays the generated pattern results in the UI.
      * @param {Object} results - The pattern results to display.
@@ -474,18 +541,18 @@ document.addEventListener("DOMContentLoaded", () => {
         patternResults.textContent = JSON.stringify(results, null, 2);
         patternResultsSection.style.display = "block";
     };
-    
+
     // ================================
     // Copy Pattern Results Functionality
     // ================================
-    
+
     copyPatternsButton.addEventListener("click", async () => {
         const patternResultsText = patternResults.textContent;
         if (!patternResultsText) {
             alert("No pattern results available to copy.");
             return;
         }
-    
+
         try {
             await navigator.clipboard.writeText(patternResultsText);
             copyPatternsButton.innerHTML = '<i class="fas fa-check"></i>';
@@ -499,5 +566,20 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error('Failed to copy pattern results:', err);
             alert("Failed to copy pattern results. Please try again.");
         }
+    });
+
+    // ================================
+    // Audio Playback End Handling
+    // ================================
+
+    audioPlayer.addEventListener('ended', () => {
+        // Remove highlight from all list items
+        recordingsList.querySelectorAll('li').forEach(li => li.classList.remove('highlight'));
+
+        // Remove playing indicators
+        recordingsList.querySelectorAll('.playing-indicator').forEach(indicator => indicator.style.display = 'none');
+
+        // Reset current selected ID
+        currentSelectedId = null;
     });
 });
