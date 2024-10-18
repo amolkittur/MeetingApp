@@ -15,6 +15,7 @@ from fastapi.templating import Jinja2Templates
 from typing import Optional, List
 import json
 from sqlalchemy import or_
+from agents.pattern_agent import PatternAgent
 
 load_dotenv()
 
@@ -253,5 +254,17 @@ async def delete_audio(file_id: int, db: Session = Depends(get_db)):
 #add search functionality
 #integrate with hakuna matata
 
-
-
+# Add this new endpoint
+@app.post("/generate-patterns")
+async def generate_patterns(request: Request):
+    data = await request.json()
+    transcript = data.get("transcript")
+    patterns = data.get("patterns")
+    
+    if not transcript or not patterns:
+        raise HTTPException(status_code=400, detail="Transcript and patterns are required")
+    
+    pattern_agent = PatternAgent(transcript, patterns)
+    results = await pattern_agent.process_patterns()
+    
+    return {"results": results}

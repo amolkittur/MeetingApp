@@ -124,6 +124,32 @@
                 <pre id="transcript"></pre>
             </div>
         </section>
+        
+        <!-- Add this after the transcript section -->
+        <div id="pattern-section" style="display: none;">
+            <h3>Generate Patterns</h3>
+            <div class="dropdown">
+                <button type="button" class="dropdown-toggle" id="patternDropdown">
+                    Select Patterns <span class="caret">&#9662;</span>
+                </button>
+                <div class="dropdown-menu" id="patternMenu">
+                    <label><input type="checkbox" name="pattern" value="github_issues"> GitHub Issues</label>
+                    <label><input type="checkbox" name="pattern" value="idea_compass"> Idea Compass</label>
+                    <label><input type="checkbox" name="pattern" value="keynote"> Keynote</label>
+                    <label><input type="checkbox" name="pattern" value="recommendation"> Recommendation</label>
+                    <label><input type="checkbox" name="pattern" value="summary"> Summary</label>
+                    <!-- Add more patterns as needed -->
+                </div>
+            </div>
+            <button id="generate-patterns" class="generate-button">Generate Patterns</button>
+            <div id="pattern-results-section" style="display: none;">
+                <h3>Pattern Results</h3>
+                <button id="copy-patterns" title="Copy Pattern Results" class="copy-button">
+                    <i class="fas fa-copy"></i>
+                </button>
+                <pre id="pattern-results"></pre>
+            </div>
+        </div>
     </main>
     
     <!-- Loading Spinner (Optional) -->

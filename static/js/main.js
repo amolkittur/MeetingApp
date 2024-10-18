@@ -1,4 +1,5 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", () => {
+    // Cached DOM Elements
     const uploadForm = document.getElementById("upload-form");
     const recordingsList = document.getElementById("recordings-list");
     const audioPlayer = document.getElementById("audio-player");
@@ -8,28 +9,47 @@ document.addEventListener("DOMContentLoaded", function() {
     const nextPageButton = document.getElementById("next-page");
     const copyTranscriptButton = document.getElementById("copy-transcript");
     const filterForm = document.getElementById("filter-form");
-    const departmentFilterInput = document.getElementById("department-filter");
-    const languageFilterInput = document.getElementById("language-filter");
     const filenameSearchInput = document.getElementById("filename-search");
     const clearFiltersButton = document.getElementById("clear-filters");
+
+    // Department Dropdown Elements
+    const departmentFilterDropdown = document.getElementById("departmentFilterDropdown");
+    const departmentFilterMenu = document.getElementById("departmentFilterMenu");
+    const departmentFilterCheckboxes = departmentFilterMenu.querySelectorAll('input[type="checkbox"]');
+
+    // Language Dropdown Elements
+    const languageFilterDropdown = document.getElementById("languageFilterDropdown");
+    const languageFilterMenu = document.getElementById("languageFilterMenu");
+    const languageFilterCheckboxes = languageFilterMenu.querySelectorAll('input[type="checkbox"]');
+
+    // Pattern Dropdown Elements
+    const patternSection = document.getElementById("pattern-section");
+    const patternDropdown = document.getElementById("patternDropdown");
+    const patternMenu = document.getElementById("patternMenu");
+    const patternCheckboxes = patternMenu.querySelectorAll('input[type="checkbox"]');
+    const generatePatternsButton = document.getElementById("generate-patterns");
+    const patternResultsSection = document.getElementById("pattern-results-section");
+    const patternResults = document.getElementById("pattern-results");
+    const copyPatternsButton = document.getElementById("copy-patterns");
+
+    // State Variables
     let currentPage = 1;
+    const pageSize = 5;
 
     let currentFilters = {
         department: "",
         language: "",
         filename: ""
     };
-    
-    const pageSize = 5;
 
-    // Create popup element
+    // Create and Configure Popup Element
     const popup = document.createElement('div');
     popup.className = 'popup';
-    popup.textContent = 'Transcript copied!';
+    popup.textContent = 'Copied!';
     document.body.appendChild(popup);
 
-    // Function to show and hide popup
-    function showPopup() {
+    const showPopup = (message = 'Copied!') => {
+        popup.textContent = message;
         popup.classList.add('fade-in');
         popup.style.display = 'block';
         setTimeout(() => {
@@ -38,140 +58,113 @@ document.addEventListener("DOMContentLoaded", function() {
             setTimeout(() => {
                 popup.classList.remove('fade-out');
                 popup.style.display = 'none';
-            }, 500); // Duration of fade-out
-        }, 2000); // Display duration
-    }
+            }, 500);
+        }, 2000);
+    };
 
-    const departmentFilterDropdown = document.getElementById("departmentFilterDropdown");
-    const departmentFilterMenu = document.getElementById("departmentFilterMenu");
-    const departmentFilterCheckboxes = departmentFilterMenu.querySelectorAll('input[type="checkbox"]');
-
-    const languageFilterDropdown = document.getElementById("languageFilterDropdown");
-    const languageFilterMenu = document.getElementById("languageFilterMenu");
-    const languageFilterCheckboxes = languageFilterMenu.querySelectorAll('input[type="checkbox"]');
-
-    // Function to toggle dropdown visibility
-    function toggleDropdown(dropdown, menu, checkboxes) {
-        dropdown.addEventListener("click", function(event) {
+    // Utility Functions
+    const toggleDropdown = (dropdown, menu, checkboxes, defaultText) => {
+        dropdown.addEventListener("click", (event) => {
             event.preventDefault();
-            if (menu.style.display === "block") {
-                menu.style.display = "none";
-                updateDropdownText(dropdown, checkboxes);
-            } else {
-                menu.style.display = "block";
-            }
+            const isVisible = menu.style.display === "block";
+            closeAllDropdowns();
+            menu.style.display = isVisible ? "none" : "block";
+            updateDropdownText(dropdown, checkboxes, defaultText);
         });
-    }
 
-    // Function to update dropdown text
-    function updateDropdownText(dropdown, checkboxes) {
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", () => updateDropdownText(dropdown, checkboxes, defaultText));
+        });
+    };
+
+    const updateDropdownText = (dropdown, checkboxes, defaultText) => {
         const selectedItems = Array.from(checkboxes)
             .filter(cb => cb.checked)
             .map(cb => cb.value);
         
+        console.log(`Selected in ${dropdown.id}:`, selectedItems); // Debugging line
+        
         dropdown.innerHTML = selectedItems.length > 0
-            ? selectedItems.join(", ") + ' <span class="caret">&#9662;</span>'
-            : 'Select ' + dropdown.textContent.split(' ')[1] + ' <span class="caret">&#9662;</span>';
-    }
+            ? `${selectedItems.join(", ")} <span class="caret">&#9662;</span>`
+            : `${defaultText} <span class="caret">&#9662;</span>`;
+    };
 
-    // Set up dropdowns
-    toggleDropdown(departmentFilterDropdown, departmentFilterMenu, departmentFilterCheckboxes);
-    toggleDropdown(languageFilterDropdown, languageFilterMenu, languageFilterCheckboxes);
+    const closeAllDropdowns = () => {
+        [departmentFilterMenu, languageFilterMenu, patternMenu].forEach(menu => {
+            menu.style.display = "none";
+        });
+    };
+
+    // Initialize Dropdowns
+    toggleDropdown(departmentFilterDropdown, departmentFilterMenu, departmentFilterCheckboxes, "Select Department");
+    toggleDropdown(languageFilterDropdown, languageFilterMenu, languageFilterCheckboxes, "Select Languages");
+    toggleDropdown(patternDropdown, patternMenu, patternCheckboxes, "Select Patterns");
 
     // Close dropdowns when clicking outside
-    document.addEventListener("click", function(event) {
-        if (!departmentFilterDropdown.contains(event.target) && !departmentFilterMenu.contains(event.target)) {
-            departmentFilterMenu.style.display = "none";
-            updateDropdownText(departmentFilterDropdown, departmentFilterCheckboxes);
-        }
-        if (!languageFilterDropdown.contains(event.target) && !languageFilterMenu.contains(event.target)) {
-            languageFilterMenu.style.display = "none";
-            updateDropdownText(languageFilterDropdown, languageFilterCheckboxes);
+    document.addEventListener("click", (event) => {
+        if (![departmentFilterDropdown, languageFilterDropdown, patternDropdown].some(dropdown => dropdown.contains(event.target))) {
+            closeAllDropdowns();
         }
     });
 
-    // Update dropdown text when checkboxes change
-    departmentFilterCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener("change", () => updateDropdownText(departmentFilterDropdown, departmentFilterCheckboxes));
-    });
-
-    languageFilterCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener("change", () => updateDropdownText(languageFilterDropdown, languageFilterCheckboxes));
-    });
-
-    // Modify the filter form submission
-    filterForm.addEventListener("submit", function(event) {
-        event.preventDefault();
-        currentPage = 1; // Reset to first page when filters change
-        currentFilters.department = Array.from(departmentFilterCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value)
-            .join(',');
-        currentFilters.language = Array.from(languageFilterCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value)
-            .join(',');
-        currentFilters.filename = filenameSearchInput.value;
-        fetchRecordings(currentPage, currentFilters);
-    });
-
-    // Handle clear filters button
-    clearFiltersButton.addEventListener("click", function() {
-        departmentFilterCheckboxes.forEach(cb => cb.checked = false);
-        languageFilterCheckboxes.forEach(cb => cb.checked = false);
-        filenameSearchInput.value = '';
-        updateDropdownText(departmentFilterDropdown, departmentFilterCheckboxes);
-        updateDropdownText(languageFilterDropdown, languageFilterCheckboxes);
-        currentFilters = { department: '', language: '', filename: '' };
-        currentPage = 1;
-        fetchRecordings(currentPage, currentFilters);
-    });
-
-    // Fetch recordings with pagination
-    function fetchRecordings(page, filters = {}) {
-        let url = `/list-audio-files?page=${page}&page_size=${pageSize}`;
-        if (filters.department) {
-            url += `&department=${encodeURIComponent(filters.department)}`;
-        }
-        if (filters.language) {
-            url += `&language=${encodeURIComponent(filters.language)}`;
-        }
-        if (filters.filename) {
-            url += `&filename=${encodeURIComponent(filters.filename)}`;
-        }
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.recordings.length === 0) {
-                    recordingsList.innerHTML = "<li>No recordings found.</li>";
-                } else {
-                    recordingsList.innerHTML = "";
-                    data.recordings.forEach(file => {
-                        const listItem = document.createElement("li");
-                        listItem.innerHTML = `
-                            <div>
-                                <strong>${file.original_filename}</strong> (${file.duration.toFixed(2)} seconds)
-                                <br>
-                                Department: ${file.department}, Language: ${file.language}
-                            </div>
-                            <button class="delete-button" data-id="${file.id}">Delete</button>
-                        `;
-                        listItem.dataset.id = file.id;
-                        listItem.querySelector(".delete-button").addEventListener("click", (e) => deleteRecording(e, file.id));
-                        listItem.addEventListener("click", () => loadRecording(file.id));
-                        recordingsList.appendChild(listItem);
-                    });
-                }
-                prevPageButton.disabled = !data.has_previous;
-                nextPageButton.disabled = !data.has_next;
+    // Fetch Recordings with Pagination and Filters
+    const fetchRecordings = async (page = 1, filters = {}) => {
+        try {
+            const queryParams = new URLSearchParams({
+                page,
+                page_size: pageSize,
+                department: filters.department,
+                language: filters.language,
+                filename: filters.filename
             });
-    }
 
-    // Initial fetch
+            const response = await fetch(`/list-audio-files?${queryParams.toString()}`);
+            if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+
+            const data = await response.json();
+            renderRecordings(data.recordings);
+            updatePaginationControls(data.has_previous, data.has_next);
+        } catch (error) {
+            console.error("Failed to fetch recordings:", error);
+            recordingsList.innerHTML = "<li>Error loading recordings.</li>";
+        }
+    };
+
+    const renderRecordings = (recordings) => {
+        recordingsList.innerHTML = recordings.length ? "" : "<li>No recordings found.</li>";
+        recordings.forEach(file => {
+            const listItem = document.createElement("li");
+            listItem.dataset.id = file.id;
+            listItem.innerHTML = `
+                <div>
+                    <strong>${file.original_filename}</strong> (${file.duration.toFixed(2)} seconds)
+                    <br>
+                    Department: ${file.department}, Language: ${file.language}
+                </div>
+                <button class="delete-button" data-id="${file.id}">Delete</button>
+            `;
+            // Event Listeners
+            listItem.addEventListener("click", (e) => {
+                if (!e.target.classList.contains('delete-button')) {
+                    loadRecording(file.id);
+                }
+            });
+            listItem.querySelector(".delete-button").addEventListener("click", (e) => {
+                deleteRecording(e, file.id);
+            });
+            recordingsList.appendChild(listItem);
+        });
+    };
+
+    const updatePaginationControls = (hasPrev, hasNext) => {
+        prevPageButton.disabled = !hasPrev;
+        nextPageButton.disabled = !hasNext;
+    };
+
+    // Initial Fetch
     fetchRecordings(currentPage, currentFilters);
 
-    // Pagination controls
+    // Pagination Controls
     prevPageButton.addEventListener("click", () => {
         if (currentPage > 1) {
             currentPage--;
@@ -184,125 +177,203 @@ document.addEventListener("DOMContentLoaded", function() {
         fetchRecordings(currentPage, currentFilters);
     });
 
-    // Handle file upload
-    uploadForm.addEventListener("submit", function(event) {
+    // Filter Form Submission
+    filterForm.addEventListener("submit", (event) => {
         event.preventDefault();
-        const formData = new FormData();
-        formData.append("file", document.getElementById("audio-file").files[0]);
-        formData.append("create_transcript", document.getElementById("create-transcript").checked);
-        formData.append("department", document.getElementById("department").value);
-        
-        // Append selected languages as a list
-        const selectedLanguages = Array.from(languageCheckboxes)
+        currentPage = 1;
+        currentFilters = {
+            department: getSelectedValues(departmentFilterCheckboxes),
+            language: getSelectedValues(languageFilterCheckboxes),
+            filename: filenameSearchInput.value.trim()
+        };
+        fetchRecordings(currentPage, currentFilters);
+    });
+
+    // Clear Filters
+    clearFiltersButton.addEventListener("click", () => {
+        resetFilters();
+        fetchRecordings(currentPage, currentFilters);
+    });
+
+    const getSelectedValues = (checkboxes) => {
+        return Array.from(checkboxes)
             .filter(cb => cb.checked)
-            .map(cb => cb.value);
+            .map(cb => cb.value)
+            .join(',');
+    };
+
+    const resetFilters = () => {
+        [departmentFilterCheckboxes, languageFilterCheckboxes].forEach(checkboxGroup => {
+            checkboxGroup.forEach(cb => cb.checked = false);
+        });
+        filenameSearchInput.value = '';
+        updateDropdownText(departmentFilterDropdown, departmentFilterCheckboxes, "Select Department");
+        updateDropdownText(languageFilterDropdown, languageFilterCheckboxes, "Select Languages");
+        currentFilters = { department: '', language: '', filename: '' };
+        currentPage = 1;
+    };
+
+    // Handle File Upload
+    uploadForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const fileInput = document.getElementById("audio-file");
+        const createTranscript = document.getElementById("create-transcript").checked;
+        const department = document.getElementById("department").value;
+        const selectedLanguages = getSelectedValues(languageFilterCheckboxes).split(',').filter(Boolean);
+
+        if (!fileInput.files.length) {
+            alert("Please select a file to upload.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("create_transcript", createTranscript);
+        formData.append("department", department);
         formData.append("language", JSON.stringify(selectedLanguages));
 
-        fetch("/upload", {
-            method: "POST",
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
+        try {
+            const response = await fetch("/upload", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
             alert(data.message);
-            location.reload();
-        })
-        .catch(error => {
+            fetchRecordings(currentPage, currentFilters);
+            uploadForm.reset();
+            resetDropdownTexts();
+        } catch (error) {
             console.error("Error uploading file:", error);
-        });
-    });    
+            alert("Failed to upload the file. Please try again.");
+        }
+    });
 
-    // Load a recording and its transcript
-    function loadRecording(id) {
-        console.log(`Loading recording with id: ${id}`); // Debugging
-        fetch(`/get-audio-details/${id}`)
-            .then(response => response.json())
-            .then(data => {
-                console.log(`Fetched audio details:`, data); // Debugging
-                audioSource.src = `/serve-audio/${id}`;
-                audioPlayer.load();
-                displayTranscript(data.transcript);
-            })
-            .catch(error => {
-                console.error('Error loading recording:', error);
-            });
-    }    
+    const resetDropdownTexts = () => {
+        updateDropdownText(departmentFilterDropdown, departmentFilterCheckboxes, "Select Department");
+        updateDropdownText(languageFilterDropdown, languageFilterCheckboxes, "Select Languages");
+    };
 
-    // Delete a recording
-    function deleteRecording(event, id) {
+    // Load a Recording and Its Transcript
+    const loadRecording = async (id) => {
+        try {
+            const response = await fetch(`/get-audio-details/${id}`);
+            if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+            const data = await response.json();
+
+            audioSource.src = `/serve-audio/${id}`;
+            audioPlayer.load();
+            displayTranscript(data.transcript);
+            patternSection.style.display = "block";
+        } catch (error) {
+            console.error('Error loading recording:', error);
+            alert("Failed to load the recording.");
+        }
+    };
+
+    // Delete a Recording
+    const deleteRecording = async (event, id) => {
         event.stopPropagation();
-        const confirmed = confirm("Do you want to delete the audio file?");
-        if (confirmed) {
-            fetch(`/delete-audio/${id}`, {
-                method: "DELETE"
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                fetchRecordings(currentPage, currentFilters);
-            })
-            .catch(error => {
-                console.error("Error deleting file:", error);
-            });
-        }
-    }    
+        if (!confirm("Do you want to delete the audio file?")) return;
 
-    function displayTranscript(transcript) {
-        transcriptSection.textContent = transcript;
+        try {
+            const response = await fetch(`/delete-audio/${id}`, { method: "DELETE" });
+            const data = await response.json();
+            alert(data.message);
+            fetchRecordings(currentPage, currentFilters);
+        } catch (error) {
+            console.error("Error deleting file:", error);
+            alert("Failed to delete the file. Please try again.");
+        }
+    };
+
+    // Display Transcript
+    const displayTranscript = (transcript) => {
+        transcriptSection.textContent = transcript || "No transcript available.";
         copyTranscriptButton.style.display = transcript ? "block" : "none";
-    }
+    };
 
-    // Copy transcript functionality
-    copyTranscriptButton.addEventListener("click", function() {
-        const transcriptText = transcriptSection.innerText;
-        if (transcriptText) {
-            navigator.clipboard.writeText(transcriptText).then(() => {
-                // Visual feedback when copied
-                copyTranscriptButton.innerHTML = '<i class="fas fa-check"></i>';
-                copyTranscriptButton.style.backgroundColor = '#28a745';
-                showPopup();
-                setTimeout(() => {
-                    copyTranscriptButton.innerHTML = '<i class="fas fa-copy"></i>';
-                    copyTranscriptButton.style.backgroundColor = '';
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-                alert("Failed to copy transcript. Please try again.");
-            });
-        } else {
+    // Copy Transcript Functionality
+    copyTranscriptButton.addEventListener("click", async () => {
+        const transcriptText = transcriptSection.textContent;
+        if (!transcriptText || transcriptText === "No transcript available.") {
             alert("No transcript available to copy.");
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(transcriptText);
+            copyTranscriptButton.innerHTML = '<i class="fas fa-check"></i>';
+            copyTranscriptButton.style.backgroundColor = '#28a745';
+            showPopup("Transcript copied!");
+            setTimeout(() => {
+                copyTranscriptButton.innerHTML = '<i class="fas fa-copy"></i>';
+                copyTranscriptButton.style.backgroundColor = '';
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            alert("Failed to copy transcript. Please try again.");
         }
     });
 
-    const languageDropdown = document.getElementById("languageDropdown");
-    const languageMenu = document.getElementById("languageMenu");
-    const languageCheckboxes = languageMenu.querySelectorAll('input[type="checkbox"]');
-
-    // Toggle dropdown menu
-    languageDropdown.addEventListener("click", function(event) {
-        event.preventDefault();
-        languageMenu.style.display = languageMenu.style.display === "block" ? "none" : "block";
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener("click", function(event) {
-        if (!languageDropdown.contains(event.target) && !languageMenu.contains(event.target)) {
-            languageMenu.style.display = "none";
-        }
-    });
-
-    // Update dropdown button text
-    function updateDropdownText() {
-        const selectedLanguages = Array.from(languageCheckboxes)
+    // Generate Patterns
+    const generatePatterns = async () => {
+        const transcript = transcriptSection.textContent;
+        const selectedPatterns = Array.from(patternCheckboxes)
             .filter(cb => cb.checked)
             .map(cb => cb.value);
-        
-        languageDropdown.innerHTML = selectedLanguages.length > 0
-            ? selectedLanguages.join(", ") + ' <span class="caret">&#9662;</span>'
-            : 'Select Languages <span class="caret">&#9662;</span>';
-    }
 
-    languageCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener("change", updateDropdownText);
+        if (!transcript || !selectedPatterns.length) {
+            alert("Please ensure there's a transcript and at least one pattern is selected.");
+            return;
+        }
+
+        try {
+            const response = await fetch("/generate-patterns", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ transcript, patterns: selectedPatterns }),
+            });
+
+            if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+
+            const data = await response.json();
+            displayPatternResults(data.results);
+        } catch (error) {
+            console.error("Error generating patterns:", error);
+            alert("Failed to generate patterns. Please try again.");
+        }
+    };
+
+    // Display Pattern Results
+    const displayPatternResults = (results) => {
+        patternResults.textContent = JSON.stringify(results, null, 2);
+        patternResultsSection.style.display = "block";
+    };
+
+    // Copy Pattern Results Functionality
+    copyPatternsButton.addEventListener("click", async () => {
+        const patternResultsText = patternResults.textContent;
+        if (!patternResultsText) {
+            alert("No pattern results available to copy.");
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(patternResultsText);
+            copyPatternsButton.innerHTML = '<i class="fas fa-check"></i>';
+            copyPatternsButton.style.backgroundColor = '#28a745';
+            showPopup("Pattern results copied!");
+            setTimeout(() => {
+                copyPatternsButton.innerHTML = '<i class="fas fa-copy"></i>';
+                copyPatternsButton.style.backgroundColor = '';
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy pattern results:', err);
+            alert("Failed to copy pattern results. Please try again.");
+        }
     });
+
+    // Initialize Pattern Functionality
+    generatePatternsButton.addEventListener("click", generatePatterns);
 });

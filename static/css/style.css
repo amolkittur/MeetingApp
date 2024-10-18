@@ -417,3 +417,46 @@ main {
 .caret {
     float: right;
 }
+
+#pattern-section {
+    margin-top: 2em;
+    background-color: #ffffff;
+    padding: 1.5em;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#pattern-results-section {
+    position: relative;
+    background-color: #f8f9fa;
+    padding: 1em;
+    border-radius: 4px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 1em;
+}
+
+#pattern-results {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-width: 100%;
+    margin: 0;
+    padding-right: 3em;
+    color: #333;
+}
+
+.generate-button {
+    margin-top: 1em;
+    padding: 0.75em 1.5em;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.generate-button:hover {
+    background-color: #218838;
+}
