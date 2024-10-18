@@ -22,8 +22,11 @@ class PatternAgent:
 
     async def _process_pattern(self, pattern: str) -> dict:
         prompt = await self.__get_prompt(pattern)
+        model_name = os.getenv("OPENAI_MODEL")
+        if not model_name:
+            raise ValueError("OPENAI_MODEL environment variable is not set")
         response = await self.client.chat.completions.create(
-            model= os.getenv("OPENAI_MODEL_NAME"),
+            model=model_name,  # Use the model name from the environment variable
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": self.transcript},
