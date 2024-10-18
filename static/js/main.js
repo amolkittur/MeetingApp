@@ -534,13 +534,60 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     /**
-     * Displays the generated pattern results in the UI.
-     * @param {Object} results - The pattern results to display.
+     * Displays the generated pattern results in the UI with improved formatting.
+     * @param {Array} results - The pattern results to display.
      */
     const displayPatternResults = (results) => {
-        patternResults.textContent = JSON.stringify(results, null, 2);
+        // Check if results are present and correctly structured
+        if (!results || !Array.isArray(results) || results.length === 0 || !Array.isArray(results[0])) {
+            patternResults.innerHTML = "<p>No pattern results available.</p>";
+            patternResultsSection.style.display = "block";
+            return;
+        }
+
+        // Extract the first string from the nested array
+        const resultString = results[0][0];
+        
+        // Split the string into sections based on headers (e.g., # HEADER)
+        const sections = resultString.split('\n\n# ').map(section => section.trim());
+
+        // Initialize HTML content
+        let html = '';
+
+        sections.forEach(section => {
+            // Ensure each section starts with a header
+            if (section.startsWith('#')) {
+                // Remove the leading '#' and any trailing colon
+                const headerEndIndex = section.indexOf('\n');
+                const header = section.substring(1, headerEndIndex).replace(':', '').trim();
+                html += `<h3>${header}</h3>`;
+
+                // Get the content after the header
+                const content = section.substring(headerEndIndex + 1).trim();
+
+                // Check if the content is a list
+                if (/^\d+\.\s/.test(content)) {
+                    // Split the content into individual list items
+                    const listItems = content.split('\n').map(item => {
+                        const match = item.match(/^\d+\.\s+(.*)/);
+                        return match ? `<li>${match[1]}</li>` : null;
+                    }).filter(item => item !== null).join('');
+                    html += `<ul>${listItems}</ul>`;
+                } else {
+                    // If not a list, treat it as a paragraph
+                    html += `<p>${content}</p>`;
+                }
+            } else {
+                // If the section doesn't start with a header, display it as a paragraph
+                html += `<p>${section}</p>`;
+            }
+        });
+
+        // Update the pattern results section with the formatted HTML
+        patternResults.innerHTML = html;
         patternResultsSection.style.display = "block";
     };
+
 
     // ================================
     // Copy Pattern Results Functionality
